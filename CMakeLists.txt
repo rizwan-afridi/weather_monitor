@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.13.4)
+project (sensor_hum)
+#find_library(bcm2835_lib bcm2835)
+add_executable(${PROJECT_NAME} hum_test_app.c bme280.c bme280.h)
+target_link_libraries(${PROJECT_NAME} bcm2835)
