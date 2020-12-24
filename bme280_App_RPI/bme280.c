@@ -96,7 +96,7 @@ int initializeBme280(void)
     return 0;
 }
 
-int configureBme280(uint8_t press, uint8_t temp, uint8_t hum, uint8_t mode)
+int configureBme280(uint8_t press, uint8_t temp, uint8_t hum)
 {
     
     uint8_t ctrl_meas_byte = 0;
@@ -126,7 +126,7 @@ int configureBme280(uint8_t press, uint8_t temp, uint8_t hum, uint8_t mode)
     }
 
     // Operating mode being set to normal (b'11)
-    ctrl_meas_byte = (ctrl_meas_byte & 0xFC) | mode;
+    //ctrl_meas_byte = (ctrl_meas_byte & 0xFC) | mode;
     
     wbuf[0] = CTRL_MEAS;
     wbuf[1] = ctrl_meas_byte;
@@ -199,15 +199,15 @@ int bme280_read_sensor(Bme280_sensor_t *sensor_read)
     int32_t hum_uncomp = 0;
     
     regAddr = PRESS_MSB;
-    if (bcm2835_i2c_read_register_rs(&regAddr, wbuf, 8) != BCM2835_I2C_REASON_OK)
+    if (bcm2835_i2c_read_register_rs(&regAddr, rbuf, 8) != BCM2835_I2C_REASON_OK)
     {
         printf("Some shit went wrong with I2C read\n");
         return -2;
     }
 
-    press_uncomp = (((int32_t) wbuf[0] << 24 | (int32_t) wbuf[1] << 16 | (int32_t) wbuf[2] << 8) >> 12);
-    temp_uncomp = (((int32_t) wbuf[3] << 24 | (int32_t) wbuf[4] << 16 | (int32_t) wbuf[5] << 8) >> 12);
-    hum_uncomp = ((int32_t)wbuf[6] << 8) | wbuf[7];
+    press_uncomp = (((int32_t) rbuf[0] << 24 | (int32_t) rbuf[1] << 16 | (int32_t) rbuf[2] << 8) >> 12);
+    temp_uncomp = (((int32_t) rbuf[3] << 24 | (int32_t) rbuf[4] << 16 | (int32_t) rbuf[5] << 8) >> 12);
+    hum_uncomp = ((int32_t)rbuf[6] << 8) | rbuf[7];
 
     sensor_read->temp = bme280_compensate_temp(temp_uncomp);
     sensor_read->press = bme280_compensate_press(press_uncomp);
@@ -216,3 +216,37 @@ int bme280_read_sensor(Bme280_sensor_t *sensor_read)
     return 0;
 }
 
+// 1 -> BUSY, 0 -> READY
+int bme280_measurement_status(void)
+{
+    regAddr = STATUS;
+    if (bcm2835_i2c_read_register_rs(&regAddr, rbuf, 1) != BCM2835_I2C_REASON_OK)
+    {
+        printf("Some shit went wrong with I2C read\n");
+        return -2;
+    }
+
+    return (int)(rbuf[0] & 0x08);
+}
+
+// Trigger measurement (foce mode). Assumes that measurements are alraedy enabled
+// through configureBme280()
+int bme280_force_measurement(void)
+{
+    regAddr = CTRL_MEAS;
+    if (bcm2835_i2c_read_register_rs(&regAddr, rbuf, 1) != BCM2835_I2C_REASON_OK)
+    {
+        printf("Some shit went wrong with I2C read\n");
+        return -2;
+    }
+
+    wbuf[0] = CTRL_MEAS;         // Register address
+    wbuf[1] = (rbuf[0] & 0xFC) | 0x01;  // Setting mode to force mode
+    if (bcm2835_i2c_write(wbuf, 2) != BCM2835_I2C_REASON_OK)
+    {
+        printf("Some shit went wrong with I2C write\n");
+        return -2;
+    }
+
+    return 0;
+}

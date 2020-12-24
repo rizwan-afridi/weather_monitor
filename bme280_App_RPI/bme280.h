@@ -37,10 +37,12 @@ typedef struct {
 
 // Function prototypes
 int initializeBme280(void);
-int configureBme280(uint8_t press, uint8_t temp, uint8_t hum, uint8_t mode);
+int configureBme280(uint8_t press, uint8_t temp, uint8_t hum);
 int32_t bme280_compensate_temp(int32_t adc_T);
 uint32_t bme280_compensate_press(int32_t adc_P);
 uint32_t bme280_compensate_hum(int32_t adc_H);
 int bme280_read_sensor(Bme280_sensor_t *sensor_read);
+int bme280_measurement_status(void);
+int bme280_force_measurement(void);
 
 #endif  // BME280

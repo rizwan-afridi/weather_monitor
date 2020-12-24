@@ -14,7 +14,7 @@ int main()
     if (err_code)
         return 1;
 
-    err_code = configureBme280(1, 1, 1, 0x03);
+    err_code = configureBme280(1, 1, 1);
     printf("Config code: %d\n", err_code);
     if (err_code)
         return 1;
@@ -22,6 +22,12 @@ int main()
     // Reading the temperature and humidity values
     while(1)
     {
+        if (0 != bme280_force_measurement())
+        {
+            printf("Error occurred trying to force a measurement\n");
+            return 1;
+        }
+
         sleep(1);
 
         bme280_read_sensor(&weather);
