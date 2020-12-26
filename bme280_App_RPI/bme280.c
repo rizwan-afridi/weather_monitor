@@ -148,6 +148,7 @@ int32_t bme280_compensate_temp(int32_t adc_T)
     var2 = (((((adc_T >> 4) - ((int32_t)_dig_T1)) * ((adc_T >> 4) - ((int32_t)_dig_T1))) >> 12) * ((int32_t)_dig_T3)) >> 14;
     _t_fine = var1 + var2;
     T = (_t_fine * 5 + 128) >> 8;
+
     return T;
 }
 
@@ -205,8 +206,8 @@ int bme280_read_sensor(Bme280_sensor_t *sensor_read)
         return -2;
     }
 
-    press_uncomp = (((int32_t) rbuf[0] << 24 | (int32_t) rbuf[1] << 16 | (int32_t) rbuf[2] << 8) >> 12);
-    temp_uncomp = (((int32_t) rbuf[3] << 24 | (int32_t) rbuf[4] << 16 | (int32_t) rbuf[5] << 8) >> 12);
+    press_uncomp = (((int32_t) rbuf[0] << 16 | (int32_t) rbuf[1] << 8 | (int32_t) rbuf[2]) >> 4);
+    temp_uncomp = (((int32_t) rbuf[3] << 16 | (int32_t) rbuf[4] << 8 | (int32_t) rbuf[5]) >> 4);
     hum_uncomp = ((int32_t)rbuf[6] << 8) | rbuf[7];
 
     sensor_read->temp = bme280_compensate_temp(temp_uncomp);
